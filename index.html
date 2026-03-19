@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Board Voting &amp; Approvals Quiz</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #ffffff;
+      padding: 24px 16px;
+    }
+
+    .quiz-container {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 28px 32px;
+      background: #ffffff;
+      border: 1px solid #e2e2e2;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+
+    .quiz-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .quiz-badge {
+      background: #EE312E;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      padding: 4px 10px;
+      border-radius: 4px;
+    }
+
+    .quiz-progress {
+      font-size: 13px;
+      color: #888;
+      font-weight: 500;
+    }
+
+    .quiz-question {
+      font-size: 18px;
+      font-weight: 600;
+      color: #1a1a2e;
+      line-height: 1.5;
+      margin: 12px 0 20px 0;
+    }
+
+    .quiz-options {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .quiz-option {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 18px;
+      border: 2px solid #e2e2e2;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      background: #fafafa;
+    }
+
+    .quiz-option:hover:not(.disabled) {
+      border-color: #EE312E;
+      background: #fff5f5;
+    }
+
+    .quiz-option.selected.correct {
+      border-color: #1a8754;
+      background: #eafaf1;
+    }
+
+    .quiz-option.selected.incorrect {
+      border-color: #d32f2f;
+      background: #fdecea;
+    }
+
+    .quiz-option.reveal-correct {
+      border-color: #1a8754;
+      background: #eafaf1;
+    }
+
+    .quiz-option.disabled {
+      cursor: default;
+    }
+
+    .option-letter {
+      width: 32px;
+      height: 32px;
+      min-width: 32px;
+      border-radius: 50%;
+      background: #e8e8e8;
+      color: #555;
+      font-weight: 700;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+
+    .quiz-option:hover:not(.disabled) .option-letter {
+      background: #EE312E;
+      color: #fff;
+    }
+
+    .quiz-option.selected.correct .option-letter {
+      background: #1a8754;
+      color: #fff;
+    }
+
+    .quiz-option.selected.incorrect .option-letter {
+      background: #d32f2f;
+      color: #fff;
+    }
+
+    .quiz-option.reveal-correct .option-letter {
+      background: #1a8754;
+      color: #fff;
+    }
+
+    .option-text {
+      font-size: 15px;
+      color: #333;
+      line-height: 1.4;
+      flex: 1;
+    }
+
+    .option-icon {
+      font-size: 20px;
+      min-width: 24px;
+      text-align: center;
+    }
+
+    .quiz-feedback {
+      margin-top: 16px;
+      padding: 14px 18px;
+      border-radius: 8px;
+      font-size: 14px;
+      line-height: 1.5;
+      display: none;
+    }
+
+    .quiz-feedback.correct {
+      background: #eafaf1;
+      border-left: 4px solid #1a8754;
+      color: #155d3a;
+      display: block;
+    }
+
+    .quiz-feedback.incorrect {
+      background: #fdecea;
+      border-left: 4px solid #d32f2f;
+      color: #8b1a1a;
+      display: block;
+    }
+
+    .quiz-nav {
+      display: none;
+      margin-top: 16px;
+      gap: 10px;
+    }
+
+    .quiz-nav.show {
+      display: flex;
+    }
+
+    .quiz-btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .quiz-btn-next {
+      background: #EE312E;
+      color: #fff;
+    }
+
+    .quiz-btn-next:hover {
+      background: #d32a27;
+    }
+
+    .quiz-btn-retry {
+      background: #1a1a2e;
+      color: #fff;
+    }
+
+    .quiz-btn-retry:hover {
+      background: #2d2d4a;
+    }
+
+    .quiz-score {
+      display: none;
+      margin-top: 20px;
+      padding: 20px 24px;
+      border-radius: 10px;
+      text-align: center;
+    }
+
+    .quiz-score.show {
+      display: block;
+    }
+
+    .quiz-score h3 {
+      margin: 0 0 6px 0;
+      font-size: 20px;
+      color: #1a1a2e;
+    }
+
+    .quiz-score p {
+      margin: 0;
+      font-size: 15px;
+      color: #555;
+    }
+
+    .quiz-score.perfect {
+      background: #eafaf1;
+      border: 2px solid #1a8754;
+    }
+
+    .quiz-score.good {
+      background: #fff8e1;
+      border: 2px solid #f9a825;
+    }
+
+    .quiz-score.retry {
+      background: #fdecea;
+      border: 2px solid #d32f2f;
+    }
+
+    .question-slide {
+      display: none;
+    }
+
+    .question-slide.active {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="quiz-container" id="quizApp">
+
+    <!-- QUESTION 1 -->
+    <div class="question-slide active" id="q1">
+      <div class="quiz-header">
+        <span class="quiz-badge">Quiz</span>
+        <span class="quiz-progress">Question 1 of 3</span>
+      </div>
+      <div class="quiz-question">What must happen before a motion can be debated and voted on by the board?</div>
+      <div class="quiz-options">
+        <div class="quiz-option" data-correct="false" onclick="selectAnswer(this, 'q1')">
+          <span class="option-letter">A</span>
+          <span class="option-text">The board chair must approve the motion in writing</span>
+          <span class="option-icon"></span>
+        </div>
+        <div class="quiz-option" data-correct="true" onclick="selectAnswer(this, 'q1')">
+          <span class="option-letter">B</span>
+          <span class="option-text">Another board member must second the motion</span>
+          <span class="option-icon"></span>
+        </div>
+        <div class="quiz-option" data-correct="false" onclick="selectAnswer(this, 'q1')">
+          <span class="option-letter">C</span>
+          <span class="option-text">A majority of members must agree to hear it</span>
+          <span class="option-icon"></span>
+        </div>
+        <div class="quiz-option" data-correct="false" onclick="selectAnswer(this, 'q1')">
+          <span class="option-letter">D</span>
+          <span class="option-text">The motion must be submitted 48 hours in advance</span>
+          <span class="option-icon"></span>
+        </div>
+      </div>
+      <div class="quiz-feedback" id="q1-feedback-correct" data-type="correct">
+        &#10003; <strong>Correct!</strong> Under Robert's Rules of Order, a motion must be seconded by another board member before it can move to discussion and a vote. The person seconding doesn't have to support the motion — they simply agree it's worthy of consideration.
+      </div>
+      <div class="quiz-feedback" id="q1-feedback-incorrect" data-type="incorrect">
+        &#10007; <strong>Not quite.</strong> A motion must be seconded by another board member before it can proceed. Without a second, the board chair declares the motion dead for lack of a second.
+      </div>
+      <div class="quiz-nav" id="q1-nav">
+        <button class="quiz-btn quiz-btn-next" onclick="nextQuestion('q1', 'q2')">Next Question &#8594;</button>
+      </div>
+    </div>
+
+    <!-- QUESTION 2 -->
+    <div class="question-slide" id="q2">
+      <div class="quiz-header">
+        <span class="quiz-badge">Quiz</span>
+        <span class="quiz-progress">Question 2 of 3</span>
+      </div>
+      <div class="quiz-question">Which type of vote requires a higher threshold than 50% — such as 75% — to pass a motion?</div>
+      <div class="quiz-options">
+        <div class="quiz-option" data-correct="false" onclick="selectAnswer(this, 'q2')">
+          <span class="option-letter">A</span>
+          <span class="option-text">Majority vote</span>
+          <span class="option-icon"></span>
+        </div>
+        <div class="quiz-option" data-correct="false" onclick="selectAnswer(this, 'q2')">
+          <span class="option-letter">B</span>
+          <span class="option-text">Plurality vote</span>
+          <span class="option-icon"></span>
+        </div>
+        <div class="quiz-option" data-correct="true" onclick="selectAnswer(this, 'q2')">
+          <span class="option-letter">C</span>
+          <span class="option-text">Supermajority vote</span>
+          <span class="option-icon"></span>
+        </div>
+        <div class="quiz-option" data-correct="false" onclick="selectAnswer(this, 'q2')">
+          <span class="option-letter">D</span>
+          <span class="option-text">Unanimous consent</span>
+          <span class="option-icon"></span>
+        </div>
+      </div>
+      <div class="quiz-feedback" id="q2-feedback-correct" data-type="correct">
+        &#10003; <strong>Correct!</strong> A supermajority vote requires a specified percentage higher than 50% — such as two-thirds or 75% — and is typically reserved for significant board decisions.
+      </div>
+      <div class="quiz-feedback" id="q2-feedback-incorrect" data-type="incorrect">
+        &#10007; <strong>Not quite.</strong> A supermajority vote requires a higher threshold than a simple majority, such as 75%. Unanimous consent requires <em>all</em> members to agree, while a majority only requires more than 50%.
+      </div>
+      <div class="quiz-nav" id="q2-nav">
+        <button class="quiz-btn quiz-btn-next" onclick="nextQuestion('q2', 'q3')">Next Question &#8594;</button>
+      </div>
+    </div>
+
+    <!-- QUESTION 3 -->
+    <div class="question-slide" id="q3">
+      <div class="quiz-header">
+        <span class="quiz-badge">Quiz</span>
+        <span class="quiz-progress">Question 3 of 3</span>
+      </div>
+      <div class="quiz-question">In Diligent Boards, which approval type would you use to capture an official signature on finalized meeting minutes?</div>
+      <div class="quiz-options">
+        <div class="quiz-option" data-correct="true" onclick="selectAnswer(this, 'q3')">
+          <span class="option-letter">A</span>
+          <span class="option-text">Signature approval</span>
+          <span class="option-icon"></span>
+        </div>
+        <div class="quiz-option" data-correct="false" onclick="selectAnswer(this, 'q3')">
+          <span class="option-letter">B</span>
+          <span class="option-text">Custom approval</span>
+          <span class="option-icon"></span>
+        </div>
+        <div class="quiz-option" data-correct="false" onclick="selectAnswer(this, 'q3')">
+          <span class="option-letter">C</span>
+          <span class="option-text">Proxy approval</span>
+          <span class="option-icon"></span>
+        </div>
+        <div class="quiz-option" data-correct="false" onclick="selectAnswer(this, 'q3')">
+          <span class="option-letter">D</span>
+          <span class="option-text">Resolution approval</span>
+          <span class="option-icon"></span>
+        </div>
+      </div>
+      <div class="quiz-feedback" id="q3-feedback-correct" data-type="correct">
+        &#10003; <strong>Correct!</strong> Signature approvals in Diligent Boards are used when an official signature is required, such as on finalized meeting minutes or resolutions between meetings.
+      </div>
+      <div class="quiz-feedback" id="q3-feedback-incorrect" data-type="incorrect">
+        &#10007; <strong>Not quite.</strong> Signature approvals are the correct choice when an official signature is needed. Custom approvals are for decisions that need formal documentation but don't require a digital signature.
+      </div>
+      <div class="quiz-nav" id="q3-nav">
+        <button class="quiz-btn quiz-btn-next" onclick="showScore()">See Results &#8594;</button>
+      </div>
+    </div>
+
+    <!-- SCORE -->
+    <div class="quiz-score" id="quizScore">
+      <h3 id="scoreTitle"></h3>
+      <p id="scoreText"></p>
+      <div style="margin-top: 16px;">
+        <button class="quiz-btn quiz-btn-retry" onclick="restartQuiz()">Retake Quiz</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    var score = 0;
+
+    function selectAnswer(el, qId) {
+      if (el.classList.contains('disabled')) return;
+
+      var slide = document.getElementById(qId);
+      var options = slide.querySelectorAll('.quiz-option');
+      var isCorrect = el.getAttribute('data-correct') === 'true';
+
+      if (isCorrect) score++;
+
+      options.forEach(function(opt) {
+        opt.classList.add('disabled');
+      });
+
+      if (isCorrect) {
+        el.classList.add('selected', 'correct');
+        el.querySelector('.option-icon').textContent = '\u2713';
+      } else {
+        el.classList.add('selected', 'incorrect');
+        el.querySelector('.option-icon').textContent = '\u2717';
+        options.forEach(function(opt) {
+          if (opt.getAttribute('data-correct') === 'true') {
+            opt.classList.add('reveal-correct');
+            opt.querySelector('.option-icon').textContent = '\u2713';
+          }
+        });
+      }
+
+      var feedbackId = qId + '-feedback-' + (isCorrect ? 'correct' : 'incorrect');
+      document.getElementById(feedbackId).style.display = 'block';
+
+      document.getElementById(qId + '-nav').classList.add('show');
+    }
+
+    function nextQuestion(currentId, nextId) {
+      document.getElementById(currentId).classList.remove('active');
+      document.getElementById(nextId).classList.add('active');
+    }
+
+    function showScore() {
+      document.getElementById('q3').classList.remove('active');
+      var scoreEl = document.getElementById('quizScore');
+      var titleEl = document.getElementById('scoreTitle');
+      var textEl = document.getElementById('scoreText');
+
+      scoreEl.className = 'quiz-score show';
+
+      if (score === 3) {
+        scoreEl.classList.add('perfect');
+        titleEl.textContent = 'Perfect Score! 3/3';
+        textEl.textContent = 'Excellent work \u2014 you have a strong understanding of board voting and approval procedures.';
+      } else if (score === 2) {
+        scoreEl.classList.add('good');
+        titleEl.textContent = 'Well Done! 2/3';
+        textEl.textContent = 'Great effort! Review the articles above to strengthen your knowledge on the question you missed.';
+      } else {
+        scoreEl.classList.add('retry');
+        titleEl.textContent = 'Keep Learning! ' + score + '/3';
+        textEl.textContent = 'No worries \u2014 revisit the course articles and try again when you\'re ready.';
+      }
+    }
+
+    function restartQuiz() {
+      score = 0;
+      var slides = document.querySelectorAll('.question-slide');
+      slides.forEach(function(slide) {
+        slide.classList.remove('active');
+        slide.querySelectorAll('.quiz-option').forEach(function(opt) {
+          opt.classList.remove('disabled', 'selected', 'correct', 'incorrect', 'reveal-correct');
+          opt.querySelector('.option-icon').textContent = '';
+        });
+        slide.querySelectorAll('.quiz-feedback').forEach(function(fb) {
+          fb.style.display = 'none';
+        });
+        slide.querySelector('.quiz-nav').classList.remove('show');
+      });
+
+      document.getElementById('quizScore').className = 'quiz-score';
+      document.getElementById('q1').classList.add('active');
+    }
+  </script>
+</body>
+</html>
